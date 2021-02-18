@@ -1384,7 +1384,8 @@ namespace SimpleJSON
         */
         public static JSONNode FindPropertyInArray(JSONNode parent, string propName, object value = null)
         {
-            if (parent == null) return null;oreach (JSONNode json in parent)
+            if (parent == null) return null;
+            foreach (JSONNode json in parent)
             {
                 if (json[propName] != null && value == null) return json;
                 if (json[propName] != null) if (json[propName] == value) return json;
@@ -1392,24 +1393,44 @@ namespace SimpleJSON
             return null;
         }
 
+        public static List<JSONNode> ListFindPropertyInArray(JSONNode parent, string propName, object value = null)
+        {
+            if (parent == null) return null;
+            List<JSONNode> nodes = new List<JSONNode>();
+            foreach (JSONNode json in parent)
+            {
+                if (json[propName] != null && value == null) nodes.Add(json);
+                if (json[propName] != null) if (json[propName] == value) nodes.Add(json);
+            }
+            return nodes;
+        }
+
         /*
             Matches any amount properties given in tuple to a JSON in item in an array
             Invokes 'FindPropertyInArray' for each tuple in data
+            Assumes no repeating nodes
         */
         public static JSONNode FindPropertiesInArray(JSONNode parent, params Tuple<string, object>[] data)
         {
             if (parent == null) return null;
-            JSONNode node = null;
+            List<JSONNode> nodes = new List<JSONNode>();
+            List<JSONNode> nudes = new List<JSONNode>();
             foreach (var tup in data) {
-                JSONNode n = FindPropertyInArray(parent, tup.Item1, tup.Item2);
-                if (n == null) return null;
-                if (node == null) {
-                    node = n;
-                } else {
-                    if (n != node) return null;
+                List<JSONNode> f1 = ListFindPropertyInArray(parent, tup.Item1, tup.Item2);
+                if (f1 == null) continue;
+                foreach (var n in f1) {
+                    nodes.Add(n);
                 }
             }
-            return node;
+            foreach (JSONNode node in nodes) {
+                bool has = true;
+                foreach (var tup in data) {
+                    if (has) has = node[tup.Item1] != null;
+                    if (has) has = node[tup.Item1] == tup.Item2;
+                }
+                if (has) nudes.Add(node);
+            }
+            return nudes.Count == 0 ? null : nudes[0];
         }
     }
 }
